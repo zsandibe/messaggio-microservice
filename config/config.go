@@ -9,8 +9,9 @@ import (
 )
 
 type Kafka struct {
-	Topic  string `envconfig:"KAFKA_TOPIC" required:"true"`
-	Broker string `envconfig:"KAFKA_BROKER" required:"true"`
+	Broker  []string `envconfig:"KAFKA_BROKER" required:"true"`
+	Topic   string   `envconfig:"KAFKA_TOPIC" required:"true"`
+	GroupId string   `envconfig:"KAFKA_GROUP_ID" required:"true"`
 }
 
 type Server struct {
