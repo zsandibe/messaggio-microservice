@@ -3,13 +3,16 @@ package service
 import (
 	"context"
 	"log"
+	"strconv"
 
 	"github.com/segmentio/kafka-go"
 	"github.com/zsandibe/messaggio-microservice/internal/storage"
+	logger "github.com/zsandibe/messaggio-microservice/pkg"
 )
 
 type kafkaService struct {
-	storage *storage.KafkaStorage
+	messageService messageService
+	storage        *storage.KafkaStorage
 }
 
 func NewKafkaService(storage *storage.KafkaStorage) *kafkaService {
@@ -36,5 +39,27 @@ func (ks *kafkaService) ConsumeMessages(ctx context.Context) {
 			continue
 		}
 		log.Printf("Received message: key=%s, value=%s", string(msg.Key), string(msg.Value))
+		if err := ks.CommitUpdatedMessages(ctx, msg); err != nil {
+			return
+		}
+
 	}
+}
+
+func (ks *kafkaService) CommitUpdatedMessages(ctx context.Context, msg kafka.Message) error {
+	id, err := strconv.Atoi(msg.Headers[0].Key)
+	if err != nil {
+		return err
+	}
+
+	if err := ks.messageService.UpdateStatus(ctx, id); err != nil {
+		logger.Error("Failed to update message status: %v", err)
+		return err
+	}
+
+	if err := ks.storage.Reader.CommitMessages(ctx, msg); err != nil {
+		logger.Error("Failed to commit messages: %v", err)
+		return err
+	}
+	return nil
 }

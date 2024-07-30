@@ -3,6 +3,9 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"fmt"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -70,17 +73,111 @@ func (r *messageRepo) IsMessageExist(ctx context.Context, msg domain.CreateMessa
 }
 
 func (r *messageRepo) GetMessageById(ctx context.Context, id int) (*entity.Message, error) {
-	return &entity.Message{}, nil
+	var message entity.Message
+
+	query := `
+		SELECT m.id,m.content,
+		m.status,m.created_at,
+		m.updated_at
+		FROM messages m 
+		WHERE m.id = $1
+	`
+
+	if err := r.db.QueryRowContext(ctx, query, id).Scan(
+		&message.Id,
+		&message.Content,
+		&message.IsProcessed,
+		&message.CreatedAt,
+		&message.ProcessedAt,
+	); err != nil {
+		return &message, err
+	}
+	return &message, nil
 }
 
-func (r *messageRepo) GetMessagesList(ctx context.Context, inp domain.MessagesListParams) ([]*entity.Message, error) {
-	return nil, nil
+func (r *messageRepo) GetMessagesList(ctx context.Context, params domain.MessagesListParams) ([]*entity.Message, error) {
+	messages := make([]*entity.Message, 0)
+	var (
+		args    []interface{}
+		where   []string
+		orderBy []string
+	)
+
+	if params.Content != "" {
+		where = append(where, "passport_serie = $"+strconv.Itoa(len(args)+1))
+		args = append(args, params.Content)
+	}
+
+	query := "SELECT * FROM messages"
+	if len(where) > 0 {
+		query += " WHERE " + strings.Join(where, " AND ")
+	}
+	if len(orderBy) > 0 {
+		query += " ORDER BY " + strings.Join(orderBy, ", ")
+	}
+	if params.Limit > 0 {
+		query += " LIMIT $" + strconv.Itoa(len(args)+1)
+		args = append(args, params.Limit)
+	}
+	if params.Offset > 0 {
+		query += " OFFSET $" + strconv.Itoa(len(args)+1)
+		args = append(args, params.Offset)
+	}
+
+	fmt.Println(query)
+	fmt.Println(args)
+
+	rows, err := r.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		logger.Error(err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var msg *entity.Message
+		if err := rows.Scan(&msg.Id, &msg.Content, &msg.IsProcessed, &msg.CreatedAt, &msg.ProcessedAt); err != nil {
+			logger.Error(err)
+			return nil, err
+		}
+		messages = append(messages, msg)
+	}
+
+	if err := rows.Err(); err != nil {
+		logger.Error(err)
+		return nil, err
+	}
+
+	return messages, nil
 }
 
 func (r *messageRepo) DeleteMessageById(ctx context.Context, id int) error {
+	query := `
+		DELETE FROM messages WHERE id = $1
+	`
+
+	_, err := r.db.ExecContext(ctx, query, id)
+	if err != nil {
+		logger.Error(ctx, fmt.Errorf("error with executing query: %v", err))
+		return err
+	}
+
 	return nil
 }
 
-// func (r *MessageRepo) UpdateMessage(ctx context.Context, msg domain.UpdateMessageRequest) (*entity.Message, error) {
+func (r *messageRepo) UpdateStatus(ctx context.Context, id int) error {
+	query := `
+		UPDATE messages 
+		SET status = $1
+		WHERE id = $2
+	`
 
-// }
+	flag := true
+
+	_, err := r.db.ExecContext(ctx, query, flag, id)
+	if err != nil {
+		logger.Error(ctx, fmt.Errorf("error with executing query: %v", err))
+		return err
+	}
+	return nil
+}
