@@ -9,7 +9,7 @@ import (
 	"strconv"
 
 	"github.com/segmentio/kafka-go"
-	"github.com/zsandibe/messaggio-microservice/internal/entity"
+	"github.com/zsandibe/messaggio-microservice/internal/domain"
 	"github.com/zsandibe/messaggio-microservice/internal/storage"
 )
 
@@ -18,8 +18,8 @@ type kafkaConsumer struct {
 	storage        *storage.KafkaStorage
 }
 
-func NewKafkaConsumer(storage *storage.KafkaStorage, messageService messageService) *kafkaConsumer {
-	return &kafkaConsumer{storage: storage, messageService: messageService}
+func NewKafkaConsumer(messageService messageService, storage *storage.KafkaStorage) *kafkaConsumer {
+	return &kafkaConsumer{messageService: messageService, storage: storage}
 }
 
 func (kc *kafkaConsumer) ConsumeMessages(ctx context.Context) {
@@ -30,14 +30,9 @@ func (kc *kafkaConsumer) ConsumeMessages(ctx context.Context) {
 				log.Printf("Failed to read message from Kafka: %v", err)
 				continue
 			}
-			var message entity.Message
-			if err = json.Unmarshal(msg.Value, &message); err != nil {
-				log.Printf("Failed to unmarshaling message from Reader.ReadMessage: %v", err)
-				continue
-			}
-			id := strconv.Itoa(message.Id)
+
 			log.Printf("Received message: key=%s, value=%s", string(msg.Key), string(msg.Value))
-			msg.Headers[0].Key = id
+			// msg.Headers[0].Key = id
 			if err = kc.CommitUpdatedMessages(ctx, msg); err != nil {
 				log.Printf("Failed to commit updated messages: %v", err)
 				continue
@@ -47,9 +42,10 @@ func (kc *kafkaConsumer) ConsumeMessages(ctx context.Context) {
 }
 
 func (kc *kafkaConsumer) CommitUpdatedMessages(ctx context.Context, msg kafka.Message) error {
-	for _, header := range msg.Headers {
-		fmt.Println("Header key: %s, value: %s", header.Key, string(header.Value))
+	if kc == nil {
+		return errors.New("messageService is nil")
 	}
+
 	if len(msg.Key) == 0 {
 		return errors.New("message headers are empty")
 	}
@@ -59,7 +55,12 @@ func (kc *kafkaConsumer) CommitUpdatedMessages(ctx context.Context, msg kafka.Me
 		return err
 	}
 
-	if err := kc.messageService.UpdateStatus(ctx, id); err != nil {
+	var message domain.CreateMessageRequest
+	if err := json.Unmarshal(msg.Value, &message); err != nil {
+		return fmt.Errorf("failed to unmarshal message value: %w", err)
+	}
+
+	if err := kc.messageService.UpdateStatus(ctx, id, message.Content); err != nil {
 		log.Printf("Failed to update message status: %v", err)
 		return err
 	}

@@ -66,6 +66,6 @@ func (s *messageService) GetMessagesList(ctx context.Context, params domain.Mess
 	return s.messageRepo.GetMessagesList(ctx, params)
 }
 
-func (s *messageService) UpdateStatus(ctx context.Context, id int) error {
-	return s.messageRepo.UpdateStatus(ctx, id)
+func (s *messageService) UpdateStatus(ctx context.Context, id int, content string) error {
+	return s.messageRepo.UpdateStatus(ctx, id, content)
 }

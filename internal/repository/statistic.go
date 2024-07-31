@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/zsandibe/messaggio-microservice/internal/entity"
@@ -44,5 +45,31 @@ func (r *statisticRepo) GetStatsList(ctx context.Context) ([]*entity.Stats, erro
 		stats = append(stats, stat)
 	}
 	return stats, nil
+}
 
+func (r *statisticRepo) GetStatById(ctx context.Context, id int) (*entity.Stats, error) {
+	var stat entity.Stats
+	var updatedAt sql.NullTime
+
+	query := `
+		SELECT m.id,m.content,
+		m.status,m.created_at,
+		m.processed_at
+		FROM messages m 
+		WHERE m.id = $1
+	`
+
+	if err := r.db.QueryRowContext(ctx, query, id).Scan(
+		&stat.Id,
+		&stat.ProcessedCount,
+		&stat.LastProcessedContent,
+		&stat.LastProcessedMessageId,
+		&updatedAt,
+	); err != nil {
+		return &stat, err
+	}
+
+	stat.UpdatedAt = updatedAt.Time
+
+	return &stat, nil
 }

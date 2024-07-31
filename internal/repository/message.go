@@ -74,11 +74,12 @@ func (r *messageRepo) IsMessageExist(ctx context.Context, msg domain.CreateMessa
 
 func (r *messageRepo) GetMessageById(ctx context.Context, id int) (*entity.Message, error) {
 	var message entity.Message
+	var processedAt sql.NullTime
 
 	query := `
 		SELECT m.id,m.content,
 		m.status,m.created_at,
-		m.updated_at
+		m.processed_at
 		FROM messages m 
 		WHERE m.id = $1
 	`
@@ -88,15 +89,19 @@ func (r *messageRepo) GetMessageById(ctx context.Context, id int) (*entity.Messa
 		&message.Content,
 		&message.IsProcessed,
 		&message.CreatedAt,
-		&message.ProcessedAt,
+		&processedAt,
 	); err != nil {
 		return &message, err
 	}
+
+	message.ProcessedAt = processedAt.Time
+
 	return &message, nil
 }
 
 func (r *messageRepo) GetMessagesList(ctx context.Context, params domain.MessagesListParams) ([]*entity.Message, error) {
 	messages := make([]*entity.Message, 0)
+	fmt.Println(params)
 	var (
 		args    []interface{}
 		where   []string
@@ -104,7 +109,7 @@ func (r *messageRepo) GetMessagesList(ctx context.Context, params domain.Message
 	)
 
 	if params.Content != "" {
-		where = append(where, "passport_serie = $"+strconv.Itoa(len(args)+1))
+		where = append(where, "content = $"+strconv.Itoa(len(args)+1))
 		args = append(args, params.Content)
 	}
 
@@ -135,11 +140,15 @@ func (r *messageRepo) GetMessagesList(ctx context.Context, params domain.Message
 	defer rows.Close()
 
 	for rows.Next() {
-		var msg *entity.Message
-		if err := rows.Scan(&msg.Id, &msg.Content, &msg.IsProcessed, &msg.CreatedAt, &msg.ProcessedAt); err != nil {
+		var processedAt sql.NullTime
+		msg := &entity.Message{}
+		if err := rows.Scan(&msg.Id, &msg.Content, &msg.IsProcessed, &msg.CreatedAt, &processedAt); err != nil {
 			logger.Error(err)
 			return nil, err
 		}
+
+		msg.ProcessedAt = processedAt.Time
+
 		messages = append(messages, msg)
 	}
 
@@ -165,19 +174,73 @@ func (r *messageRepo) DeleteMessageById(ctx context.Context, id int) error {
 	return nil
 }
 
-func (r *messageRepo) UpdateStatus(ctx context.Context, id int) error {
-	query := `
-		UPDATE messages 
-		SET status = $1
-		WHERE id = $2
-	`
-
-	flag := true
-
-	_, err := r.db.ExecContext(ctx, query, flag, id)
+func (r *messageRepo) UpdateStatus(ctx context.Context, id int, content string) error {
+	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
-		logger.Error(ctx, fmt.Errorf("error with executing query: %v", err))
+		logger.Error(ctx, fmt.Errorf("error beginning transaction: %v", err))
 		return err
 	}
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+			return
+		}
+		tx.Commit()
+	}()
+
+	queryUpdateMessage := `
+        UPDATE messages 
+        SET status = $1, processed_at = NOW()
+        WHERE id = $2
+    `
+	flag := true
+	_, err = tx.ExecContext(ctx, queryUpdateMessage, flag, id)
+	if err != nil {
+		logger.Error(ctx, fmt.Errorf("error executing query: %v", err))
+		return err
+	}
+
+	var statsID int
+	var processedCount int
+
+	querySelectStats := `
+        SELECT id, processed_count
+        FROM message_stats
+        WHERE last_processed_message_content = $1
+    `
+
+	row := tx.QueryRowContext(ctx, querySelectStats, content)
+	err = row.Scan(&statsID, &processedCount)
+	fmt.Println(content, id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+
+			queryInsertStats := `
+                INSERT INTO message_stats (processed_count,last_processed_message_content, last_processed_message_id, updated_at)
+                VALUES (1,$1, $2, NOW())
+            `
+			_, err = tx.ExecContext(ctx, queryInsertStats, content, id)
+			if err != nil {
+				logger.Error(ctx, fmt.Errorf("error inserting into message_stats: %v", err))
+				return err
+			}
+		} else {
+			logger.Error(ctx, fmt.Errorf("error selecting from message_stats: %v", err))
+			return err
+		}
+	} else {
+
+		queryUpdateStats := `
+            UPDATE message_stats
+            SET processed_count = $1, updated_at = NOW()
+            WHERE id = $2
+        `
+		_, err = tx.ExecContext(ctx, queryUpdateStats, processedCount+1, statsID)
+		if err != nil {
+			logger.Error(ctx, fmt.Errorf("error updating message_stats: %v", err))
+			return err
+		}
+	}
+
 	return nil
 }

@@ -14,13 +14,16 @@ type Message interface {
 	DeleteMessageById(ctx context.Context, id int) error
 	GetMessagesList(ctx context.Context, params domain.MessagesListParams) ([]*entity.Message, error)
 	GetMessageById(ctx context.Context, id int) (*entity.Message, error)
-	UpdateStatus(ctx context.Context, id int) error
+	UpdateStatus(ctx context.Context, id int, content string) error
 }
 
-type Statistic interface{}
+type Statistic interface {
+	GetStatsList(ctx context.Context) ([]*entity.Stats, error)
+	GetStatById(ctx context.Context, id int) (*entity.Stats, error)
+}
 
 type Publisher interface {
-	PublishMessage(ctx context.Context, key, value []byte) error
+	PublishMessage(ctx context.Context, key, value []byte, id string) error
 }
 
 type Consumer interface {
@@ -39,6 +42,6 @@ func NewService(repo *repository.Repository, storage *storage.KafkaStorage) *Ser
 		Message:   NewMessageService(repo.Message),
 		Statistic: NewStatisticService(repo.Statistic),
 		Publisher: NewKafkaPublisher(storage),
-		Consumer:  NewKafkaConsumer(storage, messageService{}),
+		Consumer:  NewKafkaConsumer(*NewMessageService(repo.Message), storage),
 	}
 }

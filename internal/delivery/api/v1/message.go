@@ -43,7 +43,9 @@ func (h *Handler) addMessage(c *gin.Context) {
 		return
 	}
 
-	err = h.service.PublishMessage(c, bytesMessage, bytesInp)
+	id := strconv.Itoa(message.Id)
+
+	err = h.service.PublishMessage(c, bytesMessage, bytesInp, id)
 	if err != nil {
 		newErrorResponse(c, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError, fmt.Errorf("failed to publish message: %v", err))
 		return

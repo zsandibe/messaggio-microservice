@@ -9,8 +9,8 @@ type UpdateMessageRequest struct {
 }
 
 type MessagesListParams struct {
-	Content string `json:"content"`
-	Status  bool   `json:"status"`
-	Limit   int    `json:"limit"`
-	Offset  int    `json:"offset"`
+	Content string `form:"content"`
+	Status  bool   `form:"status"`
+	Limit   int    `form:"limit"`
+	Offset  int    `form:"offset"`
 }
