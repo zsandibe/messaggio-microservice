@@ -29,6 +29,14 @@ start:
 stop:
 	docker-compose down
 
+all-containers-delete:
+	docker ps -a -q | xargs -r docker rm -f
+
+
+all-images-delete:
+	docker images -q | xargs -r docker rmi -f
+
+
 
 run:
 	go run cmd/main.go

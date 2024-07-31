@@ -1,0 +1,51 @@
+version: '3.8'
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    container_name: kafka
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    ports:
+      - "9092:9092"
+
+#   api-server:
+#     build:
+#       context: .
+#     container_name: api-server
+#     volumes:
+#       - ./:/api-server/
+#     depends_on:
+#       - db
+#     ports:
+#       - "8888:8888"
+#     command: >
+#       bash -c "make run"
+
+#   db:
+#     image: postgres:latest
+#     container_name: db
+#     environment:
+#       POSTGRES_USER: ${DB_USER}
+#       POSTGRES_PASSWORD: ${DB_PASSWORD}
+#       POSTGRES_DB: ${DB_NAME}
+#     ports:
+#       - "5433:5432"
+#     volumes:
+#       - pg_data:/var/lib/postgresql/data/
+
+# volumes:
+#   pg_data: {}

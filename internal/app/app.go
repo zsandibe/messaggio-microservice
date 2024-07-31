@@ -44,6 +44,12 @@ func Start() error {
 	logger.Info("Repository loaded successfully")
 
 	service := service.NewService(repository, kafka)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	service.ConsumeMessages(ctx)
+
 	logger.Info("Service loaded successfully")
 
 	delivery := v1.NewHandler(service)
@@ -73,5 +79,4 @@ func Start() error {
 		logger.Info("Server gracefully stopped")
 	}
 	return nil
-
 }

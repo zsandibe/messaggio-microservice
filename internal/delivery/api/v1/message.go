@@ -8,12 +8,11 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/segmentio/kafka-go"
 	"github.com/zsandibe/messaggio-microservice/internal/domain"
 	"github.com/zsandibe/messaggio-microservice/pkg"
 )
 
-func (h *Handler) AddMessage(c *gin.Context) {
+func (h *Handler) addMessage(c *gin.Context) {
 	var inp domain.CreateMessageRequest
 
 	if err := c.BindJSON(&inp); err != nil {
@@ -44,15 +43,16 @@ func (h *Handler) AddMessage(c *gin.Context) {
 		return
 	}
 
-	err = h.w.WriteMessages(c, kafka.Message{
-		Key:   bytesInp,
-		Value: bytesMessage,
-	})
+	err = h.service.PublishMessage(c, bytesMessage, bytesInp)
+	if err != nil {
+		newErrorResponse(c, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError, fmt.Errorf("failed to publish message: %v", err))
+		return
+	}
 
 	c.JSON(http.StatusCreated, message)
 }
 
-func (h *Handler) DeleteMessageById(c *gin.Context) {
+func (h *Handler) deleteMessageById(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		newErrorResponse(c, http.StatusText(http.StatusBadRequest), http.StatusBadRequest, fmt.Errorf("invalid id param: %v", err))
@@ -71,7 +71,7 @@ func (h *Handler) DeleteMessageById(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Successfully deleted"})
 }
 
-func (h *Handler) GetMessageById(c *gin.Context) {
+func (h *Handler) getMessageById(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		newErrorResponse(c, http.StatusText(http.StatusBadRequest), http.StatusBadRequest, fmt.Errorf("invalid id param: %v", err))
@@ -91,7 +91,7 @@ func (h *Handler) GetMessageById(c *gin.Context) {
 	c.JSON(http.StatusOK, message)
 }
 
-func (h *Handler) GetMessagesList(c *gin.Context) {
+func (h *Handler) getMessagesList(c *gin.Context) {
 	var inp domain.MessagesListParams
 
 	if err := c.ShouldBindQuery(&inp); err != nil {

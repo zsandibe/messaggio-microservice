@@ -19,21 +19,26 @@ type Message interface {
 
 type Statistic interface{}
 
-type Kafka interface {
+type Publisher interface {
 	PublishMessage(ctx context.Context, key, value []byte) error
+}
+
+type Consumer interface {
 	ConsumeMessages(ctx context.Context)
 }
 
 type Service struct {
 	Message
 	Statistic
-	Kafka
+	Publisher
+	Consumer
 }
 
 func NewService(repo *repository.Repository, storage *storage.KafkaStorage) *Service {
 	return &Service{
 		Message:   NewMessageService(repo.Message),
 		Statistic: NewStatisticService(repo.Statistic),
-		Kafka:     NewKafkaService(storage),
+		Publisher: NewKafkaPublisher(storage),
+		Consumer:  NewKafkaConsumer(storage, messageService{}),
 	}
 }

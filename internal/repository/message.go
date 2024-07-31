@@ -25,17 +25,17 @@ func NewMessageRepo(db *sqlx.DB) *messageRepo {
 func (r *messageRepo) CreateMessage(ctx context.Context, msg domain.CreateMessageRequest) (*entity.Message, error) {
 	var message *entity.Message
 	var id int
-	var status sql.NullBool
-	var processed_at sql.NullTime
+	var status bool = false
+	var processedAt sql.NullTime
 	startTime := time.Now()
 
 	query := `
-	INSERT INTO messages (content) 
-	VALUES ($1) 
+	INSERT INTO messages (content,status,created_at,processed_at) 
+	VALUES ($1, $2, $3, $4) 
 	RETURNING id
 	`
 
-	err := r.db.QueryRowContext(ctx, query, msg.Content, status, startTime, processed_at).Scan(&id)
+	err := r.db.QueryRowContext(ctx, query, msg.Content, status, startTime, processedAt).Scan(&id)
 	if err != nil {
 		logger.Errorf("Error in inserting message: %v", err)
 		return &entity.Message{}, domain.ErrCreatingMessage
@@ -44,9 +44,9 @@ func (r *messageRepo) CreateMessage(ctx context.Context, msg domain.CreateMessag
 	message = &entity.Message{
 		Id:          id,
 		Content:     msg.Content,
-		IsProcessed: status.Bool,
+		IsProcessed: status,
 		CreatedAt:   startTime,
-		ProcessedAt: processed_at.Time,
+		ProcessedAt: processedAt.Time,
 	}
 
 	return message, nil
