@@ -23,7 +23,6 @@ func NewServer(cfg *config.Config, handler http.Handler) *Server {
 			WriteTimeout:   10 * time.Second,
 		},
 	}
-
 }
 
 func (s *Server) Run() error {
