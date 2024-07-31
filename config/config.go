@@ -15,7 +15,6 @@ type Kafka struct {
 }
 
 type Server struct {
-	Host string `envconfig:"SERVER_HOST" required:"true"`
 	Port string `envconfig:"SERVER_PORT" required:"true"`
 }
 

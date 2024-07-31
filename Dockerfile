@@ -1,12 +1,11 @@
-    FROM golang:1.21.3
+FROM golang:1.21.3
 
-    WORKDIR /api-server
+WORKDIR /api-server
 
-    COPY go.mod go.sum ./
+COPY go.mod go.sum ./
 
+RUN go mod download
 
-    RUN go mod download
+COPY . ./
 
-    COPY . ./
-
-    EXPOSE 7777
+EXPOSE 7777

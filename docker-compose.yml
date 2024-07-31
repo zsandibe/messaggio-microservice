@@ -38,24 +38,15 @@ services:
     build:
       context: .
     container_name: api-server
-    volumes:
-      - ./:/api-server/
     depends_on:
-      - kafka
-      - zookeeper
       - postgres
-    working_dir: /api-server
-    expose:
-      - 7777
     ports:
       - "7777:7777"
     command: >
-      bash -c "go run cmd/main.go"
-    
+      bash -c "make run"
 
 
 
 volumes:
+
   pg_data: {}
-
-

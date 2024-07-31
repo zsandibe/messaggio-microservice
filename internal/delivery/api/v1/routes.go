@@ -15,15 +15,15 @@ func (h *Handler) Routes() *gin.Engine {
 	{
 		messages := api.Group("/messages")
 		{
-			messages.GET("/", h.getMessagesList)
-			messages.POST("/", h.addMessage)
+			messages.GET("", h.getMessagesList)
+			messages.POST("", h.addMessage)
 			messages.GET("/:id", h.getMessageById)
 			messages.DELETE("/:id", h.deleteMessageById)
 		}
 
 		stats := api.Group("/stats")
 		{
-			stats.GET("/", h.getStatsList)
+			stats.GET("", h.getStatsList)
 			stats.GET("/:id", h.getStatById)
 		}
 	}
