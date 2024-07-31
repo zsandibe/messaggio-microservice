@@ -91,6 +91,7 @@ func (r *messageRepo) GetMessageById(ctx context.Context, id int) (*entity.Messa
 		&message.CreatedAt,
 		&processedAt,
 	); err != nil {
+		logger.Error(err)
 		return &message, err
 	}
 
@@ -165,10 +166,20 @@ func (r *messageRepo) DeleteMessageById(ctx context.Context, id int) error {
 		DELETE FROM messages WHERE id = $1
 	`
 
-	_, err := r.db.ExecContext(ctx, query, id)
+	result, err := r.db.ExecContext(ctx, query, id)
 	if err != nil {
 		logger.Error(ctx, fmt.Errorf("error with executing query: %v", err))
 		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		logger.Error(ctx, fmt.Errorf("error with getting rows affected: %v", err))
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return sql.ErrNoRows
 	}
 
 	return nil

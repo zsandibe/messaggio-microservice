@@ -21,9 +21,10 @@ func (r *statisticRepo) GetStatsList(ctx context.Context) ([]*entity.Stats, erro
 	var stats []*entity.Stats
 	query := `
 		SELECT id,processed_count,
-		last_processed_message,
+		last_processed_message_content,
+		last_processed_message_id,
 		updated_at
-		FROM statistics
+		FROM message_stats
 	`
 
 	rows, err := r.db.QueryContext(ctx, query)
@@ -33,8 +34,9 @@ func (r *statisticRepo) GetStatsList(ctx context.Context) ([]*entity.Stats, erro
 	}
 
 	for rows.Next() {
-		var stat *entity.Stats
+		var stat entity.Stats
 		err = rows.Scan(&stat.Id, &stat.ProcessedCount,
+			&stat.LastProcessedContent,
 			&stat.LastProcessedMessageId, &stat.UpdatedAt)
 
 		if err != nil {
@@ -42,7 +44,7 @@ func (r *statisticRepo) GetStatsList(ctx context.Context) ([]*entity.Stats, erro
 			return nil, err
 		}
 
-		stats = append(stats, stat)
+		stats = append(stats, &stat)
 	}
 	return stats, nil
 }
@@ -52,11 +54,11 @@ func (r *statisticRepo) GetStatById(ctx context.Context, id int) (*entity.Stats,
 	var updatedAt sql.NullTime
 
 	query := `
-		SELECT m.id,m.content,
-		m.status,m.created_at,
-		m.processed_at
-		FROM messages m 
-		WHERE m.id = $1
+		SELECT s.id,s.processed_count,
+		s.last_processed_message_content,s.last_processed_message_id,
+		s.updated_at
+		FROM message_stats s 
+		WHERE s.id = $1
 	`
 
 	if err := r.db.QueryRowContext(ctx, query, id).Scan(

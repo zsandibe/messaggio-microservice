@@ -12,6 +12,17 @@ import (
 	"github.com/zsandibe/messaggio-microservice/pkg"
 )
 
+// AddMessage godoc
+// @Summary Create a new message
+// @Description Creates a new message by taking a content
+// @Tags message
+// @Accept  json
+// @Produce  json
+// @Param   input  body      domain.CreateMessageRequest  false  "Message Creation Data"
+// @Success 201  {object} entity.Message
+// @Failure 400  {object}  errorResponse
+// @Failure 500 {object} errorResponse
+// @Router /messages [post]
 func (h *Handler) addMessage(c *gin.Context) {
 	var inp domain.CreateMessageRequest
 
@@ -54,6 +65,17 @@ func (h *Handler) addMessage(c *gin.Context) {
 	c.JSON(http.StatusCreated, message)
 }
 
+// DeleteMessageById godoc
+// @Summary Delete a message
+// @Description Delete a message by Id
+// @Tags message
+// @Accept  json
+// @Produce  json
+// @Param   id path string true "id"
+// @Success 200 {string} string "Successfully deleted"
+// @Failure 404 {object} errorResponse
+// @Failure 500 {object} errorResponse
+// @Router /messages/{id} [delete]
 func (h *Handler) deleteMessageById(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -62,7 +84,7 @@ func (h *Handler) deleteMessageById(c *gin.Context) {
 	}
 
 	if err := h.service.Message.DeleteMessageById(c, id); err != nil {
-		if err == domain.ErrMessageNotFound {
+		if errors.Is(err, domain.ErrMessageNotFound) {
 			newErrorResponse(c, http.StatusText(http.StatusNotFound), http.StatusNotFound, fmt.Errorf("error deleting message: %v", err))
 			return
 		}
@@ -73,6 +95,16 @@ func (h *Handler) deleteMessageById(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Successfully deleted"})
 }
 
+// GetMessageById godoc
+// @Summary Get message by id
+// @Description Getting message info by   id
+// @Tags message
+// @Produce json
+// @Param id path string true "id"
+// @Success 200 {object} entity.Message
+// @Failure 404 {object} errorResponse
+// @Failure 500 {object} errorResponse
+// @Router /messages/{id} [get]
 func (h *Handler) getMessageById(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -93,6 +125,20 @@ func (h *Handler) getMessageById(c *gin.Context) {
 	c.JSON(http.StatusOK, message)
 }
 
+// GetMessagesList godoc
+// @Summary Get messages list by filter
+// @Description Getting messages info by filter
+// @Tags message
+// @Accept json
+// @Produce json
+// @Param content query string false "Message`s` content"
+// @Param status query bool false "Message`s` status"
+// @Param limit query int false "Message`s limit"
+// @Param offset query int false "Message`s offset"
+// @Success 200 {object} []entity.Message
+// @Failure 404 {object} errorResponse
+// @Failure 500 {object} errorResponse
+// @Router /messages [get]
 func (h *Handler) getMessagesList(c *gin.Context) {
 	var inp domain.MessagesListParams
 

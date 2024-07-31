@@ -1,0 +1,231 @@
+basePath: /api/v1
+definitions:
+  domain.CreateMessageRequest:
+    properties:
+      content:
+        type: string
+    type: object
+  entity.Message:
+    properties:
+      content:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: integer
+      is_processed:
+        type: boolean
+      processed_at:
+        type: string
+    type: object
+  entity.Stats:
+    properties:
+      id:
+        type: integer
+      last_processed_content:
+        type: string
+      last_processed_message_id:
+        type: integer
+      processed_count:
+        type: integer
+      updated_at:
+        type: string
+    type: object
+  v1.errorResponse:
+    properties:
+      code:
+        type: integer
+      message:
+        type: string
+      status:
+        type: string
+    type: object
+host: localhost:8888
+info:
+  contact: {}
+  description: This is basic server for a message sending
+  title: Messaggio test task
+  version: "1.0"
+paths:
+  /messages:
+    get:
+      consumes:
+      - application/json
+      description: Getting messages info by filter
+      parameters:
+      - description: Message`s` content
+        in: query
+        name: content
+        type: string
+      - description: Message`s` status
+        in: query
+        name: status
+        type: boolean
+      - description: Message`s limit
+        in: query
+        name: limit
+        type: integer
+      - description: Message`s offset
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/entity.Message'
+            type: array
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/v1.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/v1.errorResponse'
+      summary: Get messages list by filter
+      tags:
+      - message
+    post:
+      consumes:
+      - application/json
+      description: Creates a new message by taking a content
+      parameters:
+      - description: Message Creation Data
+        in: body
+        name: input
+        schema:
+          $ref: '#/definitions/domain.CreateMessageRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/entity.Message'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/v1.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/v1.errorResponse'
+      summary: Create a new message
+      tags:
+      - message
+  /messages/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a message by Id
+      parameters:
+      - description: id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully deleted
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/v1.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/v1.errorResponse'
+      summary: Delete a message
+      tags:
+      - message
+    get:
+      description: Getting message info by   id
+      parameters:
+      - description: id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entity.Message'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/v1.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/v1.errorResponse'
+      summary: Get message by id
+      tags:
+      - message
+  /stats:
+    get:
+      description: Getting stats info by filter
+      parameters:
+      - description: id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/entity.Message'
+            type: array
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/v1.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/v1.errorResponse'
+      summary: Get stats list by filter
+      tags:
+      - stats
+  /stats/{id}:
+    get:
+      description: Getting stat info by   id
+      parameters:
+      - description: id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entity.Stats'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/v1.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/v1.errorResponse'
+      summary: Get stat by id
+      tags:
+      - stats
+swagger: "2.0"

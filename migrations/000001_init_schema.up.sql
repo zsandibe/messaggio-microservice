@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS message_stats (
     id SERIAL PRIMARY KEY,
     processed_count INT NOT NULL,
     last_processed_message_content TEXT NOT NULL,
-    last_processed_message_id  INT REFERENCES messages(id),
+    last_processed_message_id  INT REFERENCES messages(id) ON DELETE CASCADE NOT NULL ,
     updated_at TIMESTAMP
 );
 

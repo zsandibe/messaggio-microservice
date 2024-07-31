@@ -67,5 +67,6 @@ func (s *messageService) GetMessagesList(ctx context.Context, params domain.Mess
 }
 
 func (s *messageService) UpdateStatus(ctx context.Context, id int, content string) error {
+	logger.Debugf("Update status of message: %v %v", id, content)
 	return s.messageRepo.UpdateStatus(ctx, id, content)
 }
