@@ -124,8 +124,7 @@ KAFKA_GROUP_ID=
 ## Server configuration
 
 ```
-SERVER_HOST=localhost
-SERVER_PORT=8888
+SERVER_PORT=7777
 ```
 
 ## Postgres configuration
