@@ -41,11 +41,10 @@ func (h *Handler) getStatById(c *gin.Context) {
 }
 
 // GetStatsList godoc
-// @Summary Get stats list by filter
+// @Summary Get stats list
 // @Description Getting stats info by filter
 // @Tags stats
 // @Produce json
-// @Param  id path string true "id"
 // @Success 200 {object} []entity.Message
 // @Failure 404 {object} errorResponse
 // @Failure 500 {object} errorResponse

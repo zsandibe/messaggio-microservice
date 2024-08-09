@@ -214,16 +214,7 @@ const docTemplate = `{
                 "tags": [
                     "stats"
                 ],
-                "summary": "Get stats list by filter",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "id",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
+                "summary": "Get stats list",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -360,14 +351,13 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "localhost:8888",
+	Host:             "0.0.0.0:7777",
 	BasePath:         "/api/v1",
 	Schemes:          []string{},
 	Title:            "Messaggio test task",
 	Description:      "This is basic server for a message sending",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
-
 }
 
 func init() {

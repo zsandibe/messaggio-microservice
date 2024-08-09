@@ -6,7 +6,7 @@
         "contact": {},
         "version": "1.0"
     },
-    "host": "localhost:8888",
+    "host": "0.0.0.0:7777",
     "basePath": "/api/v1",
     "paths": {
         "/messages": {
@@ -208,16 +208,7 @@
                 "tags": [
                     "stats"
                 ],
-                "summary": "Get stats list by filter",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "id",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
+                "summary": "Get stats list",
                 "responses": {
                     "200": {
                         "description": "OK",

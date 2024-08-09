@@ -17,7 +17,7 @@ type Server struct {
 func NewServer(cfg *config.Config, handler http.Handler) *Server {
 	return &Server{
 		httpServer: http.Server{
-			Addr:           fmt.Sprintf("127.0.0.1:%s", cfg.Server.Port),
+			Addr:           fmt.Sprintf("0.0.0.0:%s", cfg.Server.Port),
 			Handler:        handler,
 			MaxHeaderBytes: 1024 * 1024,
 			ReadTimeout:    15 * time.Second,

@@ -1,4 +1,6 @@
-# Messaggio test task
+# Messaggio
+
+**A microservice on Go that accepts messages via REST API, stores them in PostgreSQL, and then sends them to Kafka for further processing. Processed messages are tagged. The service also provides an API to get statistics on processed messages.**
 
 
 ## Clone the project

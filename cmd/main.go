@@ -8,7 +8,7 @@ import (
 // @title Messaggio test task
 // @version 1.0
 // @description This is basic server for a message sending
-// @host localhost:8888
+// @host 0.0.0.0:7777
 // @BasePath /api/v1
 func main() {
 	if err := app.Start(); err != nil {
